@@ -1,8 +1,11 @@
 #include "Program.h"
 
-Program::Program(string name, unsigned int duration, string day, unsigned int hour, unsigned int minutes):exhibitionDate(day, hour, minutes){
-
-  // rest of initialisations
+Program::Program(string name,string type, unsigned int duration,Date date) :
+		exhibitionDate(date) {
+	this->name = name;
+	this->duration = duration;
+	this->recorded=false;
+	this->type=type;
+	// rest of initialisations
 }
-
 

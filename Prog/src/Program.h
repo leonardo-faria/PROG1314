@@ -16,7 +16,19 @@ class Program{
   Date exhibitionDate;
 
  public:
-  Program(string name, unsigned int duration, string day, unsigned int hour, unsigned int minutes);
+  Program(string name,string type, unsigned int duration, Date date);
+
+	const string& getName() const {
+		return name;
+	}
+
+	const Date& getExhibitionDate() const {
+		return exhibitionDate;
+	}
+
+	const string& getType() const {
+		return type;
+	}
 };
 
 #endif
