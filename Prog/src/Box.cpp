@@ -2,6 +2,7 @@
 #include "Menu.h"
 #include <sstream>
 #include <stdlib.h>     /* atoi */
+#include <algorithm>
 template<class T>
 int member(vector<T> v, T e) {
 	for (int i = 0; i < (int) v.size(); ++i) {
@@ -15,6 +16,24 @@ string itos(int n) {
 	stringstream ss;
 	ss << n;
 	return ss.str();
+}
+
+bool valid(vector<Program> v, Date d, int duration) {
+	sort(v.begin(), v.end());
+	for (int i = 0; i < v.size(); ++i) {
+		if (v[i].getExhibitionDate() > d + duration) {
+			if (i == 0)
+				return true;
+			if (v[i - 1].getExhibitionDate() + v[i - 1].getDuration() < d)
+				return true;
+			return false;
+		}
+	}
+	if (v.size() == 0)
+		return true;
+	if (v[v.size() - 1].getExhibitionDate() + v[v.size() - 1].getDuration() < d)
+		return true;
+	return false;
 }
 
 Box::Box(string passwd, Date date) :
@@ -135,7 +154,6 @@ void Box::plister() {
 }
 
 void Box::renter() {
-	//TODO TRATAR DE FALHAS DE SEGMENTAÇÃO
 	vector<string> vs;
 	for (int i = 0; i < movieClub.size(); ++i) {
 		vs.push_back(movieClub[i].getTitle());
@@ -144,16 +162,15 @@ void Box::renter() {
 		vs.push_back(seenMovies[i].getTitle());
 	}
 	int m = Menu::create_choice("Wich movie do you want to rent?", vs);
-	int mpos, spos;
-	mpos = member(movieClub, Movie(vs[m], 0));
-	spos = member(movieClub, Movie(vs[m], 0));
-	if (mpos != -1) {
-		movieClub[mpos].rent();
-		seenMovies.push_back(movieClub[mpos]);
-		movieClub.erase(movieClub.begin() + mpos);
-	} else if (spos != -1) {
-		seenMovies[spos].rent();
+	if (m < movieClub.size()) {
+		movieClub[m].rent();
+		seenMovies.push_back(movieClub[m]);
+		movieClub.erase(movieClub.begin() + m);
+	} else {
+		seenMovies[m - movieClub.size()].rent();
 	}
+	int a;
+	cin >> a;
 	Menu::create_wait("Movie " + vs[m] + " has bee rented!");
 }
 
@@ -178,59 +195,59 @@ void Box::rented() {
 
 void Box::record() {
 
-//	vector<string> vc;
-//	for (int i = 0; i < channels.size(); ++i) {
-//		vc.push_back(channels[i].getName());
-//	}
-//	int c = Menu::create_choice("Where do you want to record a program?", vc);
-//
-//	bool valid;
-//	string name;
-//	do {
-//		name = Menu::create_reader("Please insert program name:");
-//		valid = true;
-//		for (int i = 0; i < recordList.size(); ++i) {
-//			if (recordList[i].getName() == name) {
-//				Menu::create_wait("A program with that already exists, please try again");
-//				valid = false;
-//			}
-//		}
-//	} while (!valid);
-//	string type = Menu::create_reader("Please insert program type:");
-//	string duration;
-//	do {
-//		duration = Menu::create_reader("Please insert program duration:");
-//		valid = true;
-//		for (int i = 0; i < duration.size(); ++i) {
-//			if (duration[i] < '0' || duration[i] > '9') {
-//				Menu::create_wait("Invalid duration, please try again");
-//				valid = false;
-//				break;
-//			}
-//		}
-//	} while (!valid);
-//	int dus = atoi(duration.c_str());
-//
-//	Date d;
-//	//					d=Menu::create_time("Please insert program start time:");
-//
-//	//					Check date
-//
-//	Program p(name, type, dus, d);
-//	//					channels[c].addProgram(p);
-//	recordList.push_back(p);
+	vector<string> vc;
+	for (int i = 0; i < channels.size(); ++i) {
+		vc.push_back(channels[i].getName());
+	}
+	int c = Menu::create_choice("Where do you want to record a program?", vc);
 
-	Menu::create_wait("TBI");
+	bool v;
+	string name;
+	do {
+		name = Menu::create_reader("Please insert program name:");
+		v = true;
+		for (int i = 0; i < recordList.size(); ++i) {
+			if (recordList[i].getName() == name) {
+				Menu::create_wait("A program with that already exists, please try again");
+				v = false;
+			}
+		}
+	} while (!v);
+	string type = Menu::create_reader("Please insert program type:");
+	string duration;
+	do {
+		duration = Menu::create_reader("Please insert program duration:");
+		v = true;
+		for (int i = 0; i < duration.size(); ++i) {
+			if (duration[i] < '0' || duration[i] > '9') {
+				Menu::create_wait("Invalid duration, please try again");
+				v = false;
+				break;
+			}
+		}
+	} while (!v);
+	int dus = atoi(duration.c_str());
+	Date d;
+	do {
+		d = Menu::create_time("Please insert program start time:");
+		v = valid(channels[c].getPrograms(), d, dus);
+		if (!v)
+			Menu::create_wait("Date unavailable");
+	} while (!v);
+
+	Program p(name, type, dus, d);
+	channels[c].addProgram(p);
+	recordList.push_back(p);
 }
 
 void Box::user() {
 	while (1) {
 		int choice = Menu::create_choice("What do you want to do?", muser);
 		if (choice == 0) {
-			if(channels.size()!=0)
-						plister();
+			if (channels.size() != 0)
+				plister();
 		} else if (choice == 1) {
-			if(channels.size()!=0)
+			if (channels.size() != 0)
 				record();
 		} else if (choice == 2) {
 			renter();
@@ -424,27 +441,36 @@ void Box::admin() {
 	while (1) {
 		int choice = Menu::create_choice("What do you want to do?", madmin);
 		if (choice == 0) {
-//			while (1) {
-//				choice = Menu::create_choice("How do you want to edit programs?", medit);
-//				if (choice == 0) {
-//					vector<string> vs;
-//					for (int i = 0; i < recordList.size(); ++i) {
-//						vs.push_back(recordList[i].getName());
-//					}
-//					string name = Menu::create_search("Please insert the name of the program", vs);
-//					if (member(vs, name) != -1) {
-//						Menu::create_wait("Program does not exist!");
-//						break;
-//					}
-//
-//				} else if (choice == 1)
-//					;
-//				else if (choice == 2)
-//					;
-//				else
-//					break;
-//			}
-			Menu::create_wait("TBI");
+			while (1) {
+				choice = Menu::create_choice("How do you want to edit programs?", medit);
+				if (choice == 0) {
+					vector<string> vs;
+					for (int i = 0; i < recordList.size(); ++i) {
+						vs.push_back(recordList[i].getName());
+					}
+					string name = Menu::create_search("Please insert the name of the program", vs);
+					if (member(vs, name) == -1) {
+						Menu::create_wait("Program does not exist!");
+						break;
+					}
+					Menu::create_wait("TBI");
+				} else if (choice == 1) {
+					record();
+				} else if (choice == 2) {
+					vector<string> vs;
+					for (int i = 0; i < recordList.size(); ++i) {
+						vs.push_back(recordList[i].getName());
+					}
+					string name = Menu::create_search("Please insert the name of the program", vs);
+					int n = member(vs, name);
+					if (n == -1) {
+						Menu::create_wait("Program does not exist!");
+						break;
+					}
+					Menu::create_wait("TBI");
+				} else
+					break;
+			}
 		} else if (choice == 1) {
 			movies();
 		} else if (choice == 2) {

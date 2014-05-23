@@ -14,7 +14,7 @@ class Channel {
 	vector<Program> programs;
 public:
 	Channel(string name);
-
+	void addProgram(Program p);
 	const string& getName() const {
 		return name;
 	}

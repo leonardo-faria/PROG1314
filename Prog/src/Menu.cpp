@@ -10,8 +10,14 @@
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
-//#include <exception>
+#include <cstdlib>
 #include <iostream>
+#include <limits>
+#include <limits.h>
+
+#include "Date.h"
+
+class Date;
 
 void Menu::clear() {
 	printf("\033[2J\033[1;1H"); //console cleaner
@@ -98,8 +104,7 @@ int Menu::create_choice(string message, vector<string> options) {
 int Menu::get_letter() {
 	while (1) {
 		int press = getch();
-		if ((press >= 65 && press <= 90) || (press >= 97 && press <= 122)
-				|| press == 10) {
+		if ((press >= 65 && press <= 90) || (press >= 97 && press <= 122) || press == 10) {
 			return press;
 		} else if (press == 195) {
 			press = getch();
@@ -170,13 +175,12 @@ string Menu::create_search(string message, vector<string> v) {
 
 string Menu::create_reader(string message) {
 	clear();
-	string str;
+	string str, temp;
 	cout << message << endl;
 	while (1) {
-
 		try {
 			cin.exceptions(istream::failbit | istream::badbit);
-			cin >> str;
+			getline(cin,str);
 			break;
 		} catch (...) {
 			cout << "Error in input, please try again" << endl;
@@ -184,7 +188,7 @@ string Menu::create_reader(string message) {
 		cin.clear();
 		cin.ignore();
 	}
-	getch();
+	//getch();
 	return str;
 }
 
@@ -194,8 +198,31 @@ void Menu::create_wait(string message) {
 	getch();
 }
 
-//Date Menu::creat_date(string message){
-//	string week;
-//	unsigned int hour;
-//	unsigned int minutes;
-//}
+Date Menu::create_time(string message) {
+	string week, h, m;
+	unsigned int hour;
+	unsigned int minutes;
+	week = Date::getWeek()[create_choice("Choose day", Date::getWeek())];
+	bool valid = true;
+	do {
+		h = create_reader("Hour?");
+		for (int i = 0; i < h.size(); ++i) {
+			if (h[i] < '0' && h[i] > '9') {
+				valid = false;
+				create_wait("Invalid number! (0...23");
+			}
+		}
+		hour = atoi(h.c_str());
+	} while (!valid || hour > 23 || hour < 0);
+	do {
+		m = create_reader("Minutes?");
+		for (int i = 0; i < m.size(); ++i) {
+			if (m[i] < '0' && m[i] > '9') {
+				valid = false;
+				create_wait("Invalid number! (0...59)");
+			}
+		}
+		minutes = atoi(m.c_str());
+	} while (!valid || minutes > 59 || minutes < 0);
+	return Date(week, hour, minutes);
+}

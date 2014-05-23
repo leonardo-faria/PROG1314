@@ -12,7 +12,7 @@ void Date::init() {
 	if (week.size() == 0) {
 		week.push_back("Sunday");
 		week.push_back("Monday");
-		week.push_back("Tyesday");
+		week.push_back("Tuesday");
 		week.push_back("Wednesday");
 		week.push_back("Thursday");
 		week.push_back("Friday");
