@@ -1,8 +1,13 @@
 #include "Box.h"
-#include "Menu.h"
-#include <sstream>
+
 #include <stdlib.h>     /* atoi */
 #include <algorithm>
+#include <fstream>
+#include <iterator>
+#include <sstream>
+
+//#include "Menu.h"
+
 template<class T>
 int member(vector<T> v, T e) {
 	for (int i = 0; i < (int) v.size(); ++i) {
@@ -49,7 +54,7 @@ Box::Box(string passwd, Date date) :
 
 	mlogin.push_back("Admin");
 	mlogin.push_back("User");
-	mlogin.push_back("Exit");
+	mlogin.push_back("Exit (and Save)");
 
 	madmin.push_back("Edit programs");
 	madmin.push_back("Edit movies");
@@ -72,7 +77,6 @@ Box::Box(string passwd, Date date) :
 	mprogram.push_back("Name");
 	mprogram.push_back("Type");
 	mprogram.push_back("Duration");
-	mprogram.push_back("Exhibition date");
 	mprogram.push_back("Back");
 
 	mchannel.push_back("Name");
@@ -169,8 +173,6 @@ void Box::renter() {
 	} else {
 		seenMovies[m - movieClub.size()].rent();
 	}
-	int a;
-	cin >> a;
 	Menu::create_wait("Movie " + vs[m] + " has bee rented!");
 }
 
@@ -244,12 +246,22 @@ void Box::user() {
 	while (1) {
 		int choice = Menu::create_choice("What do you want to do?", muser);
 		if (choice == 0) {
-			if (channels.size() != 0)
-				plister();
+			if (channels.size() == 0) {
+				Menu::create_wait("Can't have programs with no channels");
+				continue;
+			}
+			plister();
 		} else if (choice == 1) {
-			if (channels.size() != 0)
-				record();
+			if (channels.size() == 0) {
+				Menu::create_wait("Can't have programs with no channels");
+				continue;
+			}
+			record();
 		} else if (choice == 2) {
+			if (movieClub.size() == 0 || seenMovies.size() == 0) {
+				Menu::create_wait("There are no movies");
+				continue;
+			}
 			renter();
 		} else if (choice == 3) {
 			spent();
@@ -434,10 +446,103 @@ void Box::chans() {
 void Box::del(string name) {
 	for (int i = 0; i < channels.size(); ++i) {
 		for (int j = 0; j < channels[i].getPrograms().size(); ++j) {
-			if(channels[i].getPrograms()[j].getName()==name)
+			if (channels[i].getPrograms()[j].getName() == name)
 				channels[i].removePrograms(j);
 		}
 	};
+}
+
+void Box::progs() {
+	int choice;
+	while (1) {
+		choice = Menu::create_choice("How do you want to edit programs?", medit);
+		if (choice == 0) {
+			vector<string> vs;
+			for (int i = 0; i < recordList.size(); ++i) {
+				vs.push_back(recordList[i].getName());
+			}
+			string name = Menu::create_search("Please insert the name of the program", vs);
+			int n = member(vs, name);
+			if (n == -1) {
+				Menu::create_wait("Program does not exist!");
+				break;
+			}
+			while (1) {
+
+				int e = Menu::create_choice("What do you want to edit?", mprogram);
+				if (e == 0) {
+					string name;
+					do {
+						name = Menu::create_reader("Insert new program name");
+						if (member(vs, name))
+							Menu::create_wait("Name already in use!");
+					} while (member(vs, name));
+					recordList[n].setName(name);
+					for (int i = 0; i < channels.size(); ++i) {
+						for (int j = 0; j < channels[i].getPrograms().size(); ++j) {
+							if (channels[i].getPrograms()[j].getName() == vs[n])
+								channels[i].getProgram(j)->setName(name);
+						}
+					}
+				} else if (e == 1) {
+					string type = Menu::create_reader("Insert program type");
+					recordList[n].setType(type);
+					for (int i = 0; i < channels.size(); ++i) {
+						for (int j = 0; j < channels[i].getPrograms().size(); ++j) {
+							if (channels[i].getPrograms()[j].getName() == vs[n])
+								channels[i].getProgram(j)->setType(type);
+						}
+					}
+
+				} else if (e == 2) {
+					string duration;
+					bool invalid = true;
+					while (invalid) {
+						invalid = false;
+						duration = Menu::create_reader("Insert duration");
+						for (int i = 0; i < duration.size(); ++i) {
+							if (duration[i] < '0' || duration[i] > '9') {
+								Menu::create_wait("Not a number!");
+								invalid = true;
+								break;
+							}
+						}
+					}
+					if (!valid(recordList, recordList[n].getExhibitionDate(), atoi(duration.c_str())))
+					{
+						Menu::create_wait("Invalid duration!");
+						break;
+					}
+					recordList[n].setDuration(atoi(duration.c_str()));
+					for (int i = 0; i < channels.size(); ++i) {
+						for (int j = 0; j < channels[i].getPrograms().size(); ++j) {
+
+							if (channels[i].getPrograms()[j].getName() == vs[n])
+								channels[i].getProgram(j)->setDuration(atoi(duration.c_str()));
+						}
+					}
+				}
+
+			}
+			Menu::create_wait("TBI");
+		} else if (choice == 1) {
+			record();
+		} else if (choice == 2) {
+			vector<string> vs;
+			for (int i = 0; i < recordList.size(); ++i) {
+				vs.push_back(recordList[i].getName());
+			}
+			string name = Menu::create_search("Please insert the name of the program", vs);
+			int n = member(vs, name);
+			if (n == -1) {
+				Menu::create_wait("Program does not exist!");
+				break;
+			}
+			recordList.erase(recordList.begin() + n);
+			del(name);
+		} else
+			break;
+	}
 }
 
 void Box::admin() {
@@ -450,39 +555,11 @@ void Box::admin() {
 	while (1) {
 		int choice = Menu::create_choice("What do you want to do?", madmin);
 		if (choice == 0) {
-			while (1) {
-				choice = Menu::create_choice("How do you want to edit programs?", medit);
-				if (choice == 0) {
-					vector<string> vs;
-					for (int i = 0; i < recordList.size(); ++i) {
-						vs.push_back(recordList[i].getName());
-					}
-					string name = Menu::create_search("Please insert the name of the program", vs);
-					if (member(vs, name) == -1) {
-						Menu::create_wait("Program does not exist!");
-						break;
-					}
-
-					Menu::create_wait("TBI");
-				} else if (choice == 1) {
-					record();
-				} else if (choice == 2) {
-					vector<string> vs;
-					for (int i = 0; i < recordList.size(); ++i) {
-						vs.push_back(recordList[i].getName());
-					}
-					string name = Menu::create_search("Please insert the name of the program", vs);
-					int n = member(vs, name);
-					if (n == -1) {
-						Menu::create_wait("Program does not exist!");
-						break;
-					}
-					recordList.erase(recordList.begin()+n);
-					del(name);
-					Menu::create_wait("TBI");
-				} else
-					break;
+			if (channels.size() == 0) {
+				Menu::create_wait("Can't have programs with no channels");
+				continue;
 			}
+			progs();
 		} else if (choice == 1) {
 			movies();
 		} else if (choice == 2) {
@@ -503,8 +580,10 @@ int Box::run() {
 		} else if (choice == 1) {
 			Menu::create_wait("Welcome to the box!");
 			user();
-		} else
+		} else {
+			write();
 			break;
+		}
 	}
 	return 0;
 }
@@ -555,4 +634,144 @@ vector<Program> Box::listByType(string type, string day) const {
 			vp.push_back(recordList[i]);
 	}
 	return vp;
+}
+
+void Box::readBox() {
+	ifstream myfile("Box.txt");
+	if (myfile.is_open()) {
+		getline(myfile, password);
+		myfile.close();
+	}
+}
+void Box::readMovies() {
+	string title, temp;
+	float cost;
+	unsigned int n;
+	ifstream myfile("Movies.txt");
+	if (myfile.is_open()) {
+		while (getline(myfile, title, ',')) {
+			getline(myfile, temp, ',');
+			stringstream ss1, ss2;
+			ss1 << temp;
+			ss1 >> cost;
+			getline(myfile, temp);
+			ss2 << temp;
+			ss2 >> n;
+			if (n == 0)
+				movieClub.push_back(Movie(title, cost, n));
+			else
+				seenMovies.push_back(Movie(title, cost, n));
+		}
+		myfile.close();
+	}
+}
+void Box::readPrograms() {
+	string name, type, temp, weekday;
+	int duration;
+	unsigned int hour;
+	unsigned int minutes;
+
+	ifstream myfile("Programs.txt");
+	if (myfile.is_open()) {
+		while (getline(myfile, name, ',')) {
+			getline(myfile, type, ',');
+			getline(myfile, temp, ',');
+			stringstream ss1, ss2, ss3;
+			ss1 << temp;
+			ss1 >> duration;
+			getline(myfile, weekday, ',');
+			getline(myfile, temp, ',');
+			ss2 << temp;
+			ss2 >> hour;
+			getline(myfile, temp, ',');
+			ss3 << temp;
+			ss3 >> minutes;
+			recordList.push_back(Program(name, type, duration, Date(weekday, hour, minutes)));
+			if (Date::currentDate() > Date(weekday, hour, minutes))
+				recordList[recordList.size() - 1].setRecorded(true);
+		}
+		myfile.close();
+	}
+}
+void Box::readChannels() {
+	vector<string> vs;
+	for (int i = 0; i < recordList.size(); ++i) {
+		vs.push_back(recordList[i].getName());
+	}
+	string str;
+	int n;
+	ifstream myfile("Channels.txt");
+	if (myfile.is_open()) {
+		while (getline(myfile, str, ',')) {
+			channels.push_back(Channel(str));
+			stringstream ss;
+			getline(myfile, str, ',');
+			ss << str;
+			ss >> n;
+			for (int i = 0; i < n; ++i) {
+				getline(myfile, str, ',');
+				int p = member(vs, str);
+				channels[channels.size() - 1].addProgram(recordList[p]);
+			}
+		}
+		myfile.close();
+	}
+}
+void Box::read() {
+	readBox();
+	readMovies();
+	readPrograms();
+	readChannels();
+}
+
+void Box::writeBox() {
+	ofstream myfile("Box.txt");
+	if (myfile.is_open()) {
+		myfile << password;
+		myfile.close();
+	};
+}
+void Box::writeMovies() {
+	ofstream myfile("Movies.txt");
+	string str;
+	for (int i = 0; i < movieClub.size(); ++i) {
+		str += movieClub[i].getTitle() + "," + itos(movieClub[i].getCost()) + "," + itos(movieClub[i].getTimesRented()) + "\n";
+	}
+	for (int i = 0; i < seenMovies.size(); ++i) {
+		str += seenMovies[i].getTitle() + "," + itos(seenMovies[i].getCost()) + "," + itos(seenMovies[i].getTimesRented()) + "\n";
+	}
+
+	if (myfile.is_open()) {
+		myfile << str;
+		myfile.close();
+	};
+}
+void Box::writeChannels() {
+	ofstream myfile("Channels.txt");
+	string str;
+	for (int i = 0; i < channels.size(); ++i) {
+		str += channels[i].getName() + "," + itos(channels[i].getPrograms().size()) + ",";
+		for (int j = 0; j < channels[i].getPrograms().size(); ++j) {
+			str += channels[i].getPrograms()[j].getName() + ",";
+		}
+		str += "\n";
+	}
+	if (myfile.is_open()) {
+		myfile << str;
+		myfile.close();
+	};
+}
+void Box::writePrograms() {
+	string str;
+	for (int i = 0; i < recordList.size(); ++i) {
+		str += recordList[i].getName() + "," + recordList[i].getType() + "," + itos(recordList[i].getDuration()) + "," + recordList[i].getExhibitionDate().getWeekDay() + ","
+				+ itos(recordList[i].getExhibitionDate().getHour()) + "," + itos(recordList[i].getExhibitionDate().getMinutes()) + "\n";
+	}
+}
+
+void Box::write() {
+	writeBox();
+	writeMovies();
+	writeChannels();
+	writePrograms();
 }

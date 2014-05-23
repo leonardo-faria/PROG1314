@@ -28,6 +28,11 @@ public:
 		programs.erase(programs.begin()+i);
 	}
 
+	Program* getProgram(int i)
+	{
+		return &programs[i];
+	}
+
 	void setName(const string& name) {
 		this->name = name;
 	}

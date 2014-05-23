@@ -64,6 +64,14 @@ public:
 		}
 		return Date(day, hour + (d % 60), minutes + d);
 	}
+
+	unsigned int getHour() const {
+		return hour;
+	}
+
+	unsigned int getMinutes() const {
+		return minutes;
+	}
 };
 
 #endif

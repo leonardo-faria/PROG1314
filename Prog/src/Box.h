@@ -42,7 +42,19 @@ class Box {
 	void admin();
 	void movies();
 	void chans();
+	void progs();
 	void del(string name);
+
+	void readChannels();
+	void readMovies();
+	void readPrograms();
+	void readBox();
+
+	void writeChannels();
+	void writeMovies();
+	void writePrograms();
+	void writeBox();
+	void write();
 public:
 	Box(string passwd, Date currentDate);
 	vector<Program> listByDay(string day) const;
@@ -53,6 +65,7 @@ public:
 
 	//BOX
 	int run();
+	void read();
 };
 
 #endif

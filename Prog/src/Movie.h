@@ -9,7 +9,7 @@ class Movie {
 	string title;
 	//  string type; // removed in the final version of the work text
 	float cost;
-	unsigned timesRented;
+	unsigned int timesRented;
 public:
 	void rent()
 	{
@@ -17,6 +17,7 @@ public:
 	}
 
 	Movie(string title, float cost);
+	Movie(string title, float cost,int timesRented);
 	bool operator==(Movie& m) {
 		return this->title==m.title;
 	}

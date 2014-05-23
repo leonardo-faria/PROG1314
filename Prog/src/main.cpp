@@ -11,7 +11,7 @@ using namespace std;
 int main() {
 	Date::init();
 	Box box = Box("???", Date::currentDate());
-
+	box.read();
 	box.run();
 
 	exit(0);
