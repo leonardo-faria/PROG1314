@@ -42,7 +42,7 @@ class Box {
 	void admin();
 	void movies();
 	void chans();
-
+	void del(string name);
 public:
 	Box(string passwd, Date currentDate);
 	vector<Program> listByDay(string day) const;
@@ -50,19 +50,6 @@ public:
 	vector<Program> listByChannel(string channel) const;
 	vector<Program> listByType(string type, string day) const;
 	vector<Program> listByType(string type) const;
-
-	// Channel CRUD
-	bool createdChanel();
-	bool removeChanel();
-	bool updateChanel();
-	// Program CRUD
-	bool createdProgram(string chanel);
-	bool removeProgram();
-	bool updateProgram();
-	// Movie CRUD
-	bool createdMovie();
-	bool removeMovie();
-	bool updateMovie();
 
 	//BOX
 	int run();

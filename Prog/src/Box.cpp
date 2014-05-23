@@ -431,6 +431,15 @@ void Box::chans() {
 	}
 }
 
+void Box::del(string name) {
+	for (int i = 0; i < channels.size(); ++i) {
+		for (int j = 0; j < channels[i].getPrograms().size(); ++j) {
+			if(channels[i].getPrograms()[j].getName()==name)
+				channels[i].removePrograms(j);
+		}
+	};
+}
+
 void Box::admin() {
 
 	if (Menu::create_reader("Please insert your password:") != password) {
@@ -453,6 +462,7 @@ void Box::admin() {
 						Menu::create_wait("Program does not exist!");
 						break;
 					}
+
 					Menu::create_wait("TBI");
 				} else if (choice == 1) {
 					record();
@@ -467,6 +477,8 @@ void Box::admin() {
 						Menu::create_wait("Program does not exist!");
 						break;
 					}
+					recordList.erase(recordList.begin()+n);
+					del(name);
 					Menu::create_wait("TBI");
 				} else
 					break;

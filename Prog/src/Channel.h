@@ -23,6 +23,11 @@ public:
 		return programs;
 	}
 
+	void removePrograms(int i)
+	{
+		programs.erase(programs.begin()+i);
+	}
+
 	void setName(const string& name) {
 		this->name = name;
 	}
