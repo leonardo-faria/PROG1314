@@ -15,11 +15,12 @@ class Date;
 
 using namespace std;
 class Menu {
-public:
+private:
 	static void clear();
 	static int getch();
 	static int get_key();
 	static int get_letter();
+public:
 	static int create_choice(string message, vector<string> options);
 	static string create_search(string message, vector<string> v);
 	static string create_reader(string message);

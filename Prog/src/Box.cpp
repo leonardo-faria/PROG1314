@@ -6,7 +6,6 @@
 #include <iterator>
 #include <sstream>
 
-//#include "Menu.h"
 
 template<class T>
 int member(vector<T> v, T e) {
@@ -24,21 +23,15 @@ string itos(int n) {
 }
 
 bool valid(vector<Program> v, Date d, int duration) {
-	sort(v.begin(), v.end());
 	for (int i = 0; i < v.size(); ++i) {
-		if (v[i].getExhibitionDate() > d + duration) {
-			if (i == 0)
-				return true;
-			if (v[i - 1].getExhibitionDate() + v[i - 1].getDuration() < d)
-				return true;
+		if(v[i].getExhibitionDate() > d && v[i].getExhibitionDate() < d + duration)
 			return false;
-		}
+		if(v[i].getExhibitionDate() + v[i].getDuration() > d && v[i].getExhibitionDate() + v[i].getDuration() < d + duration)
+			return false;
+		if(d > v[i].getExhibitionDate() && d + duration < v[i].getExhibitionDate() + v[i].getDuration())
+			return false;
 	}
-	if (v.size() == 0)
-		return true;
-	if (v[v.size() - 1].getExhibitionDate() + v[v.size() - 1].getDuration() < d)
-		return true;
-	return false;
+	return true;
 }
 
 Box::Box(string passwd, Date date) :
@@ -60,6 +53,7 @@ Box::Box(string passwd, Date date) :
 	madmin.push_back("Edit movies");
 	madmin.push_back("Edit channels");
 	madmin.push_back("User menu");
+	madmin.push_back("Change password");
 	madmin.push_back("Logout");
 
 	muser.push_back("List programs");
@@ -111,7 +105,6 @@ void Box::plister() {
 		}
 		choice = Menu::create_choice("Programs for " + mdayC[choice] + " (" + Date::currentDate().getWeekDay() + ")", vs);
 	} else if (choice == 1) {
-		//TODO TRATAR DE FALHAS DE SEGMENTAÇÃO
 		choice = Menu::create_choice("Which day?", mdayA);
 		vector<string> vc;
 		for (int i = 0; i < channels.size(); ++i) {
@@ -181,7 +174,7 @@ void Box::spent() {
 	for (int i = 0; i < seenMovies.size(); ++i) {
 		p += seenMovies[i].getCost() * seenMovies[i].getTimesRented();
 	}
-	Menu::create_wait("A total of " + itos(p) + " moneiz has been spent in rented movies");
+	Menu::create_wait("A total of " + itos(p) + " money has been spent in rented movies");
 }
 
 void Box::rented() {
@@ -258,7 +251,7 @@ void Box::user() {
 			}
 			record();
 		} else if (choice == 2) {
-			if (movieClub.size() == 0 || seenMovies.size() == 0) {
+			if (movieClub.size() == 0 && seenMovies.size() == 0) {
 				Menu::create_wait("There are no movies");
 				continue;
 			}
@@ -508,8 +501,7 @@ void Box::progs() {
 							}
 						}
 					}
-					if (!valid(recordList, recordList[n].getExhibitionDate(), atoi(duration.c_str())))
-					{
+					if (!valid(recordList, recordList[n].getExhibitionDate(), atoi(duration.c_str()))) {
 						Menu::create_wait("Invalid duration!");
 						break;
 					}
@@ -521,10 +513,10 @@ void Box::progs() {
 								channels[i].getProgram(j)->setDuration(atoi(duration.c_str()));
 						}
 					}
-				}
+				} else
+					break;
 
 			}
-			Menu::create_wait("TBI");
 		} else if (choice == 1) {
 			record();
 		} else if (choice == 2) {
@@ -566,7 +558,9 @@ void Box::admin() {
 			chans();
 		} else if (choice == 3) {
 			user();
-		} else if (choice == 4)
+		} else if (choice == 4) {
+			password=Menu::create_reader("Please insert a new password: ");
+		} else if (choice == 5)
 			break;
 	}
 
@@ -683,7 +677,7 @@ void Box::readPrograms() {
 			getline(myfile, temp, ',');
 			ss2 << temp;
 			ss2 >> hour;
-			getline(myfile, temp, ',');
+			getline(myfile, temp);
 			ss3 << temp;
 			ss3 >> minutes;
 			recordList.push_back(Program(name, type, duration, Date(weekday, hour, minutes)));
@@ -703,6 +697,7 @@ void Box::readChannels() {
 	ifstream myfile("Channels.txt");
 	if (myfile.is_open()) {
 		while (getline(myfile, str, ',')) {
+
 			channels.push_back(Channel(str));
 			stringstream ss;
 			getline(myfile, str, ',');
@@ -713,6 +708,7 @@ void Box::readChannels() {
 				int p = member(vs, str);
 				channels[channels.size() - 1].addProgram(recordList[p]);
 			}
+			getline(myfile, str);
 		}
 		myfile.close();
 	}
@@ -754,7 +750,6 @@ void Box::writeChannels() {
 		for (int j = 0; j < channels[i].getPrograms().size(); ++j) {
 			str += channels[i].getPrograms()[j].getName() + ",";
 		}
-		str += "\n";
 	}
 	if (myfile.is_open()) {
 		myfile << str;
@@ -762,11 +757,16 @@ void Box::writeChannels() {
 	};
 }
 void Box::writePrograms() {
+	ofstream myfile("Programs.txt");
 	string str;
 	for (int i = 0; i < recordList.size(); ++i) {
 		str += recordList[i].getName() + "," + recordList[i].getType() + "," + itos(recordList[i].getDuration()) + "," + recordList[i].getExhibitionDate().getWeekDay() + ","
 				+ itos(recordList[i].getExhibitionDate().getHour()) + "," + itos(recordList[i].getExhibitionDate().getMinutes()) + "\n";
 	}
+	if (myfile.is_open()) {
+		myfile << str;
+		myfile.close();
+	};
 }
 
 void Box::write() {
